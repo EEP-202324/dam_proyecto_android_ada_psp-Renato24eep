@@ -1,0 +1,5 @@
+package com.miaplicacion.feedbackapp;
+
+public record FeedBack() {
+
+}
