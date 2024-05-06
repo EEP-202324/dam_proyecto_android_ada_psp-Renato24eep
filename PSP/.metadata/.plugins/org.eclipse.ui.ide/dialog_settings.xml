@@ -8,7 +8,12 @@
 		<item key="SmartImportRootWizardPage.STORE_NESTED_PROJECTS" value="true"/>
 		<item key="SmartImportRootWizardPage.STORE_CONFIGURE_NATURES" value="true"/>
 		<list key="org.eclipse.ui.internal.wizards.datatransfer.SmartImportRootWizardPage.knownSources">
+			<item value="C:\Users\renat\Desktop\DAM\Proyecto Final PSP ADA ANDROID\dam_proyecto_android_ada_psp-Renato24eep\PSP\feedbackapp"/>
 			<item value="C:\Users\renat\Desktop\DAM\Proyecto Final PSP ADA ANDROID\PSP\feedbackapp"/>
 		</list>
+	</section>
+	<section name="ChooseWorkspaceDialogSettings">
+		<item key="DIALOG_X_ORIGIN" value="411"/>
+		<item key="DIALOG_Y_ORIGIN" value="135"/>
 	</section>
 </section>
