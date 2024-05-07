@@ -6,4 +6,5 @@
     <fullyQualifiedTypeName name="javax.annotation.processing.Generated"/>
     <fullyQualifiedTypeName name="org.hibernate.annotations.Generated"/>
     <fullyQualifiedTypeName name="org.springframework.aot.generate.Generated"/>
+    <fullyQualifiedTypeName name="org.springframework.data.jpa.repository.JpaRepository"/>
 </qualifiedTypeNameHistroy>
