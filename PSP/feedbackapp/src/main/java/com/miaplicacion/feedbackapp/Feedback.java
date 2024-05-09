@@ -17,6 +17,18 @@ public class Feedback {
 	private String opinion;
 	private Double puntuacion;
 
+	public Feedback() {
+	}
+	
+	public Feedback(Long id, String nombre, String evento, String opinion, Double puntuacion) {
+		super();
+		this.id = id;
+		this.nombre = nombre;
+		this.evento = evento;
+		this.opinion = opinion;
+		this.puntuacion = puntuacion;
+	}
+	
 	public Long getId() {
 		return id;
 	}
