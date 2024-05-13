@@ -1,34 +1,38 @@
-package com.miaplicacion.feedbackapp;
+package com.miaplicacion.feedbackapp.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table
+@Table(name = "feedbacks")
 public class Feedback {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private String nombre;
-	private String evento;
 	private String opinion;
 	private Double puntuacion;
 
 	public Feedback() {
 	}
-	
+
 	public Feedback(Long id, String nombre, String evento, String opinion, Double puntuacion) {
 		super();
 		this.id = id;
 		this.nombre = nombre;
-		this.evento = evento;
 		this.opinion = opinion;
 		this.puntuacion = puntuacion;
 	}
-	
+
+	@ManyToOne
+	@JoinColumn(name = "evento_id", nullable = false)
+	private Evento evento;
+
 	public Long getId() {
 		return id;
 	}
@@ -43,14 +47,6 @@ public class Feedback {
 
 	public void setNombre(String nombre) {
 		this.nombre = nombre;
-	}
-
-	public String getEvento() {
-		return evento;
-	}
-
-	public void setEvento(String evento) {
-		this.evento = evento;
 	}
 
 	public String getOpinion() {
@@ -68,5 +64,13 @@ public class Feedback {
 	public void setPuntuacion(Double puntuacion) {
 		this.puntuacion = puntuacion;
 	}
+	
+	public Evento getEvento() {
+        return evento;
+    }
+
+    public void setEvento(Evento evento) {
+        this.evento = evento;
+    }
 
 }

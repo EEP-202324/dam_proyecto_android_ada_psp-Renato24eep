@@ -1,4 +1,4 @@
-package com.miaplicacion.feedbackapp;
+package com.miaplicacion.feedbackapp.controller;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.miaplicacion.feedbackapp.model.Feedback;
+import com.miaplicacion.feedbackapp.repository.FeedbackRepository;
 
 @RestController
 @RequestMapping("/api/feedback")
@@ -50,7 +53,6 @@ public class FeedbackController {
 
 		Feedback feedback = feedbackOptional.get();
 		feedback.setNombre(feedbackDetails.getNombre());
-		feedback.setEvento(feedbackDetails.getEvento());
 		feedback.setOpinion(feedbackDetails.getOpinion());
 		feedback.setPuntuacion(feedbackDetails.getPuntuacion());
 
