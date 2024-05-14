@@ -5,14 +5,20 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.eep.dam.android.feedbackapp.model.Evento
 import com.eep.dam.android.feedbackapp.ui.theme.FeedbackAppTheme
 import com.eep.dam.android.feedbackapp.viewmodel.MainViewModel
@@ -26,7 +32,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             FeedbackAppTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    MainScreen(viewModel)
+                    val navController = rememberNavController()
+                    NavGraph(navController, viewModel)
                 }
             }
         }
@@ -35,12 +42,50 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(viewModel: MainViewModel) {
+fun NavGraph(navController: NavHostController, viewModel: MainViewModel) {
+    NavHost(navController = navController, startDestination = "mainScreen") {
+        composable("mainScreen") {
+            MainScreen(navController, viewModel)
+        }
+        composable("eventDetail/{eventoId}") { backStackEntry ->
+            val eventoId = backStackEntry.arguments?.getString("eventoId")?.toLongOrNull()
+            val evento = viewModel.getEventoById(eventoId)
+            if (evento != null) {
+                EventDetailScreen(navController, evento, viewModel)
+            }
+        }
+    }
+}
+
+@Composable
+fun MainScreen(navController: NavHostController, viewModel: MainViewModel) {
     val eventos by viewModel.eventos.observeAsState(emptyList())
     var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(eventos) {
         Log.d("MainScreen", "Eventos cargados: ${eventos.size}")
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            if (eventos.isEmpty()) {
+                Text(
+                    text = "No events available",
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(16.dp)
+                )
+            } else {
+                EventList(navController, eventos)
+            }
+            Spacer(modifier = Modifier.weight(1f))
+        }
+        Button(
+            onClick = { showDialog = true },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) {
+            Text(text = "Añadir evento")
+        }
     }
 
     if (showDialog) {
@@ -49,43 +94,24 @@ fun MainScreen(viewModel: MainViewModel) {
             showDialog = false
         })
     }
+}
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        if (eventos.isEmpty()) {
-            Text(
-                text = "No events available",
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(16.dp)
-            )
-        } else {
-            EventList(eventos)
-        }
-        Button(
-            onClick = { showDialog = true },
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(16.dp)
-        ) {
-            Text(text = "Add Event")
+@Composable
+fun EventList(navController: NavHostController, eventos: List<Evento>) {
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(bottom = 56.dp)) {
+        items(eventos) { evento ->
+            EventItem(navController, evento)
         }
     }
 }
 
 @Composable
-fun EventList(eventos: List<Evento>) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(eventos.size) { index ->
-            val evento = eventos[index]
-            EventItem(evento)
-        }
-    }
-}
-
-@Composable
-fun EventItem(evento: Evento) {
+fun EventItem(navController: NavHostController, evento: Evento) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable { navController.navigate("eventDetail/${evento.id}") },
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -104,23 +130,23 @@ fun AddEventDialog(onDismiss: () -> Unit, onAdd: (Evento) -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Add Event") },
+        title = { Text(text = "Añadir evento") },
         text = {
             Column {
                 OutlinedTextField(
                     value = titulo,
                     onValueChange = { titulo = it },
-                    label = { Text("Title") }
+                    label = { Text("Titulo") }
                 )
                 OutlinedTextField(
                     value = hora,
                     onValueChange = { hora = it },
-                    label = { Text("Time (HH:mm)") }
+                    label = { Text("Hora (HH:mm)") }
                 )
                 OutlinedTextField(
                     value = localizacion,
                     onValueChange = { localizacion = it },
-                    label = { Text("Location") }
+                    label = { Text("Localizacion") }
                 )
             }
         },
@@ -129,12 +155,12 @@ fun AddEventDialog(onDismiss: () -> Unit, onAdd: (Evento) -> Unit) {
                 val evento = Evento(0, titulo, hora, localizacion)
                 onAdd(evento)
             }) {
-                Text("Add")
+                Text("Añadir")
             }
         },
         dismissButton = {
             Button(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Cancelar")
             }
         }
     )

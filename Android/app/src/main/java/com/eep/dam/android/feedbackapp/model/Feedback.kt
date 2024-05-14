@@ -5,5 +5,5 @@ data class Feedback(
     val nombre: String,
     val opinion: String,
     val puntuacion: Double,
-    val evento: Evento
+    var evento: Evento? = null
 )
