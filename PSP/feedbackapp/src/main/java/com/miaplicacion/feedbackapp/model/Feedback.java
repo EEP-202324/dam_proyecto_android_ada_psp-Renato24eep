@@ -1,5 +1,7 @@
 package com.miaplicacion.feedbackapp.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,6 +33,7 @@ public class Feedback {
 
 	@ManyToOne
 	@JoinColumn(name = "evento_id", nullable = false)
+    @JsonBackReference
 	private Evento evento;
 
 	public Long getId() {
