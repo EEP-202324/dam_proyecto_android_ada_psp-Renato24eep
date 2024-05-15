@@ -68,4 +68,9 @@ public class FeedbackController {
 		feedbackRepository.deleteById(id);
 		return ResponseEntity.ok().build();
 	}
+	
+	@GetMapping("/evento/{eventoId}")
+    public List<Feedback> getFeedbacksByEventoId(@PathVariable Long eventoId) {
+        return feedbackRepository.findByEventoId(eventoId);
+    }
 }

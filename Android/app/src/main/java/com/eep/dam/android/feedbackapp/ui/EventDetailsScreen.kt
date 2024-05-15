@@ -18,8 +18,12 @@ import com.eep.dam.android.feedbackapp.viewmodel.MainViewModel
 
 @Composable
 fun EventDetailScreen(navController: NavHostController, evento: Evento, viewModel: MainViewModel) {
-    val feedbacks by viewModel.getFeedbacksForEvent(evento).observeAsState(emptyList())
+    val feedbacks by viewModel.feedbacks.observeAsState(emptyList())
     var showDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(evento.id) {
+        viewModel.fetchFeedbacksForEvent(evento.id)
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -46,7 +50,7 @@ fun EventDetailScreen(navController: NavHostController, evento: Evento, viewMode
             onClick = { showDialog = true },
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Text(text = "Añadir feedback")
+            Text(text = "Añadir opinion")
         }
     }
 
@@ -77,7 +81,7 @@ fun AddFeedbackDialog(onDismiss: () -> Unit, onAdd: (Feedback) -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Añadir feedback") },
+        title = { Text(text = "Añadir opinion") },
         text = {
             Column {
                 OutlinedTextField(
@@ -92,7 +96,7 @@ fun AddFeedbackDialog(onDismiss: () -> Unit, onAdd: (Feedback) -> Unit) {
                 )
                 OutlinedTextField(
                     value = puntuacion.toString(),
-                    onValueChange = { puntuacion = it.toDouble() },
+                    onValueChange = { puntuacion = it.toDoubleOrNull() ?: 0.0 },
                     label = { Text("Puntuación") }
                 )
             }
