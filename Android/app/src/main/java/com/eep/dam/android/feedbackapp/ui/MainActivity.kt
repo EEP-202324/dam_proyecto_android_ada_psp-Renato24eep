@@ -63,7 +63,9 @@ fun MainScreen(navController: NavHostController, viewModel: MainViewModel) {
     var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(eventos) {
-        Log.d("MainScreen", "Eventos cargados: ${eventos.size}")
+        if (eventos.isEmpty()) {
+            viewModel.fetchEventos()
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -74,17 +76,18 @@ fun MainScreen(navController: NavHostController, viewModel: MainViewModel) {
                     modifier = Modifier.align(Alignment.CenterHorizontally).padding(16.dp)
                 )
             } else {
-                EventList(navController, eventos)
+                EventList(navController, viewModel, eventos)
             }
             Spacer(modifier = Modifier.weight(1f))
         }
-        Button(
-            onClick = { showDialog = true },
+        Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(16.dp)
         ) {
-            Text(text = "Añadir evento")
+            Button(onClick = { showDialog = true }) {
+                Text(text = "Añadir evento")
+            }
         }
     }
 
@@ -97,16 +100,43 @@ fun MainScreen(navController: NavHostController, viewModel: MainViewModel) {
 }
 
 @Composable
-fun EventList(navController: NavHostController, eventos: List<Evento>) {
+fun EventList(navController: NavHostController, viewModel: MainViewModel, eventos: List<Evento>) {
     LazyColumn(modifier = Modifier.fillMaxSize().padding(bottom = 56.dp)) {
         items(eventos) { evento ->
-            EventItem(navController, evento)
+            EventItem(navController, viewModel, evento)
         }
     }
 }
 
 @Composable
-fun EventItem(navController: NavHostController, evento: Evento) {
+fun EventItem(navController: NavHostController, viewModel: MainViewModel, evento: Evento) {
+    var showConfirmDialog by remember { mutableStateOf(false) }
+
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text("Confirmar eliminación") },
+            text = { Text("¿Estás seguro de que deseas eliminar este evento?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteEvento(evento.id)
+                        showConfirmDialog = false
+                    }
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showConfirmDialog = false }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -118,6 +148,14 @@ fun EventItem(navController: NavHostController, evento: Evento) {
             Text(text = evento.titulo, style = MaterialTheme.typography.titleLarge)
             Text(text = "Hora: ${evento.hora}")
             Text(text = "Localización: ${evento.localizacion}")
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Button(onClick = { navController.navigate("eventDetail/${evento.id}") }) {
+                    Text(text = "Ver feedbacks")
+                }
+                Button(onClick = { showConfirmDialog = true }) {
+                    Text(text = "Eliminar evento")
+                }
+            }
         }
     }
 }

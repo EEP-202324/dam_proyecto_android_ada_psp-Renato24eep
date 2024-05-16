@@ -61,6 +61,42 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun updateEvento(evento: Evento) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                Log.d("MainViewModel", "Updating evento: $evento")
+                val response = RetrofitClient.instance.create(ApiService::class.java).updateEvento(evento.id, evento).awaitResponse()
+                if (response.isSuccessful) {
+                    Log.d("MainViewModel", "Evento updated successfully: ${response.body()}")
+                    fetchEventos()
+                } else {
+                    Log.e("MainViewModel", "Error updating evento: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e("MainViewModel", "Exception: ${e.message}")
+            }
+        }
+    }
+
+    fun deleteEvento(eventoId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                Log.d("MainViewModel", "Deleting evento: $eventoId")
+                val response = RetrofitClient.instance.create(ApiService::class.java).deleteEvento(eventoId).awaitResponse()
+                if (response.isSuccessful) {
+                    Log.d("MainViewModel", "Evento deleted successfully")
+                    fetchEventos()
+                } else {
+                    Log.e("MainViewModel", "Error deleting evento: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e("MainViewModel", "Exception: ${e.message}")
+            }
+        }
+    }
+
     fun getEventoById(id: Long?): Evento? {
         return _eventos.value?.find { it.id == id }
     }
@@ -93,6 +129,42 @@ class MainViewModel : ViewModel() {
                     fetchFeedbacksForEvent(evento.id)
                 } else {
                     Log.e("MainViewModel", "Error adding feedback: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e("MainViewModel", "Exception: ${e.message}")
+            }
+        }
+    }
+
+    fun updateFeedback(feedback: Feedback) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = RetrofitClient.instance.create(ApiService::class.java).updateFeedback(feedback.id, feedback).awaitResponse()
+                if (response.isSuccessful) {
+                    Log.d("MainViewModel", "Feedback updated successfully: ${response.body()}")
+                    fetchFeedbacksForEvent(feedback.evento?.id ?: 0L)  // Actualizar lista de feedbacks
+                } else {
+                    Log.e("MainViewModel", "Error updating feedback: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e("MainViewModel", "Exception: ${e.message}")
+            }
+        }
+    }
+
+    fun deleteFeedback(feedbackId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                Log.d("MainViewModel", "Deleting feedback: $feedbackId")
+                val response = RetrofitClient.instance.create(ApiService::class.java).deleteFeedback(feedbackId).awaitResponse()
+                if (response.isSuccessful) {
+                    Log.d("MainViewModel", "Feedback deleted successfully")
+                    val updatedFeedbacks = _feedbacks.value?.filterNot { it.id == feedbackId } ?: emptyList()
+                    _feedbacks.postValue(updatedFeedbacks)
+                } else {
+                    Log.e("MainViewModel", "Error deleting feedback: ${response.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

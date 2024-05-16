@@ -20,9 +20,36 @@ import com.eep.dam.android.feedbackapp.viewmodel.MainViewModel
 fun EventDetailScreen(navController: NavHostController, evento: Evento, viewModel: MainViewModel) {
     val feedbacks by viewModel.feedbacks.observeAsState(emptyList())
     var showDialog by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(evento.id) {
         viewModel.fetchFeedbacksForEvent(evento.id)
+    }
+
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text("Confirmar eliminación") },
+            text = { Text("¿Estás seguro de que deseas eliminar este evento?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteEvento(evento.id)
+                        navController.navigateUp()
+                        showConfirmDialog = false
+                    }
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showConfirmDialog = false }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -42,15 +69,20 @@ fun EventDetailScreen(navController: NavHostController, evento: Evento, viewMode
         Text(text = "Feedbacks", style = MaterialTheme.typography.titleMedium)
         LazyColumn(modifier = Modifier.fillMaxSize().weight(1f)) {
             items(feedbacks) { feedback ->
-                FeedbackItem(feedback)
+                FeedbackItem(feedback, viewModel)
             }
         }
 
-        Button(
-            onClick = { showDialog = true },
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = "Añadir opinion")
+            Button(onClick = { showDialog = true }) {
+                Text(text = "Añadir feedback")
+            }
+            Button(onClick = { showConfirmDialog = true }) {
+                Text(text = "Eliminar evento")
+            }
         }
     }
 
@@ -63,12 +95,42 @@ fun EventDetailScreen(navController: NavHostController, evento: Evento, viewMode
 }
 
 @Composable
-fun FeedbackItem(feedback: Feedback) {
+fun FeedbackItem(feedback: Feedback, viewModel: MainViewModel) {
+    var showConfirmDialog by remember { mutableStateOf(false) }
+
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text("Confirmar eliminación") },
+            text = { Text("¿Estás seguro de que deseas eliminar este feedback?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteFeedback(feedback.id)
+                        showConfirmDialog = false
+                    }
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showConfirmDialog = false }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     Card(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = feedback.nombre, style = MaterialTheme.typography.titleMedium)
             Text(text = "Opinión: ${feedback.opinion}")
             Text(text = "Puntuación: ${feedback.puntuacion}")
+            Button(onClick = { showConfirmDialog = true }) {
+                Text(text = "Eliminar feedback")
+            }
         }
     }
 }
