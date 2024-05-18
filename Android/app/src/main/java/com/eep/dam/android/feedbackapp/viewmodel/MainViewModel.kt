@@ -64,7 +64,6 @@ class MainViewModel : ViewModel() {
     fun updateEvento(evento: Evento) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                Log.d("MainViewModel", "Updating evento: $evento")
                 val response = RetrofitClient.instance.create(ApiService::class.java).updateEvento(evento.id, evento).awaitResponse()
                 if (response.isSuccessful) {
                     Log.d("MainViewModel", "Evento updated successfully: ${response.body()}")
@@ -143,7 +142,7 @@ class MainViewModel : ViewModel() {
                 val response = RetrofitClient.instance.create(ApiService::class.java).updateFeedback(feedback.id, feedback).awaitResponse()
                 if (response.isSuccessful) {
                     Log.d("MainViewModel", "Feedback updated successfully: ${response.body()}")
-                    fetchFeedbacksForEvent(feedback.evento?.id ?: 0L)  // Actualizar lista de feedbacks
+                    feedback.evento?.id?.let { fetchFeedbacksForEvent(it) }
                 } else {
                     Log.e("MainViewModel", "Error updating feedback: ${response.errorBody()?.string()}")
                 }

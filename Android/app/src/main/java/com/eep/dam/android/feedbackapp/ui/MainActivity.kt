@@ -61,6 +61,8 @@ fun NavGraph(navController: NavHostController, viewModel: MainViewModel) {
 fun MainScreen(navController: NavHostController, viewModel: MainViewModel) {
     val eventos by viewModel.eventos.observeAsState(emptyList())
     var showDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var selectedEvento by remember { mutableStateOf<Evento?>(null) }
 
     LaunchedEffect(eventos) {
         if (eventos.isEmpty()) {
@@ -76,7 +78,10 @@ fun MainScreen(navController: NavHostController, viewModel: MainViewModel) {
                     modifier = Modifier.align(Alignment.CenterHorizontally).padding(16.dp)
                 )
             } else {
-                EventList(navController, viewModel, eventos)
+                EventList(navController, viewModel, eventos, onEdit = {
+                    selectedEvento = it
+                    showEditDialog = true
+                })
             }
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -97,19 +102,28 @@ fun MainScreen(navController: NavHostController, viewModel: MainViewModel) {
             showDialog = false
         })
     }
-}
 
-@Composable
-fun EventList(navController: NavHostController, viewModel: MainViewModel, eventos: List<Evento>) {
-    LazyColumn(modifier = Modifier.fillMaxSize().padding(bottom = 56.dp)) {
-        items(eventos) { evento ->
-            EventItem(navController, viewModel, evento)
+    if (showEditDialog) {
+        selectedEvento?.let { evento ->
+            EditEventDialog(evento = evento, onDismiss = { showEditDialog = false }, onSave = { updatedEvento ->
+                viewModel.updateEvento(updatedEvento)
+                showEditDialog = false
+            })
         }
     }
 }
 
 @Composable
-fun EventItem(navController: NavHostController, viewModel: MainViewModel, evento: Evento) {
+fun EventList(navController: NavHostController, viewModel: MainViewModel, eventos: List<Evento>, onEdit: (Evento) -> Unit) {
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(bottom = 56.dp)) {
+        items(eventos) { evento ->
+            EventItem(navController, viewModel, evento, onEdit)
+        }
+    }
+}
+
+@Composable
+fun EventItem(navController: NavHostController, viewModel: MainViewModel, evento: Evento, onEdit: (Evento) -> Unit) {
     var showConfirmDialog by remember { mutableStateOf(false) }
 
     if (showConfirmDialog) {
@@ -148,12 +162,15 @@ fun EventItem(navController: NavHostController, viewModel: MainViewModel, evento
             Text(text = evento.titulo, style = MaterialTheme.typography.titleLarge)
             Text(text = "Hora: ${evento.hora}")
             Text(text = "Localización: ${evento.localizacion}")
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.SpaceBetween) {
                 Button(onClick = { navController.navigate("eventDetail/${evento.id}") }) {
                     Text(text = "Ver feedbacks")
                 }
                 Button(onClick = { showConfirmDialog = true }) {
                     Text(text = "Eliminar evento")
+                }
+                Button(onClick = { onEdit(evento) }) {
+                    Text(text = "Editar evento")
                 }
             }
         }
@@ -163,7 +180,7 @@ fun EventItem(navController: NavHostController, viewModel: MainViewModel, evento
 @Composable
 fun AddEventDialog(onDismiss: () -> Unit, onAdd: (Evento) -> Unit) {
     var titulo by remember { mutableStateOf("") }
-    var hora by remember { mutableStateOf("") }
+    var hora by remember { mutableStateOf("09:00") }
     var localizacion by remember { mutableStateOf("") }
 
     AlertDialog(

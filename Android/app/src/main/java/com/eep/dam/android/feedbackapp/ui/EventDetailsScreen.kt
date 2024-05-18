@@ -19,8 +19,11 @@ import com.eep.dam.android.feedbackapp.viewmodel.MainViewModel
 @Composable
 fun EventDetailScreen(navController: NavHostController, evento: Evento, viewModel: MainViewModel) {
     val feedbacks by viewModel.feedbacks.observeAsState(emptyList())
-    var showDialog by remember { mutableStateOf(false) }
+    var showAddDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showEditFeedbackDialog by remember { mutableStateOf(false) } // Nueva bandera
     var showConfirmDialog by remember { mutableStateOf(false) }
+    var selectedFeedback by remember { mutableStateOf<Feedback?>(null) }
 
     LaunchedEffect(evento.id) {
         viewModel.fetchFeedbacksForEvent(evento.id)
@@ -63,39 +66,59 @@ fun EventDetailScreen(navController: NavHostController, evento: Evento, viewMode
 
         Text(text = "Hora: ${evento.hora}")
         Text(text = "Localización: ${evento.localizacion}")
+        Row {
+            Button(onClick = { showEditDialog = true }) {
+                Text(text = "Editar evento")
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Button(onClick = { showConfirmDialog = true }) {
+                Text(text = "Eliminar evento")
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(text = "Feedbacks", style = MaterialTheme.typography.titleMedium)
         LazyColumn(modifier = Modifier.fillMaxSize().weight(1f)) {
             items(feedbacks) { feedback ->
-                FeedbackItem(feedback, viewModel)
+                FeedbackItem(feedback, viewModel, onEdit = { selectedFeedback = it; showEditFeedbackDialog = true })
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+        Button(
+            onClick = { showAddDialog = true },
+            modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Button(onClick = { showDialog = true }) {
-                Text(text = "Añadir feedback")
-            }
-            Button(onClick = { showConfirmDialog = true }) {
-                Text(text = "Eliminar evento")
-            }
+            Text(text = "Añadir feedback")
         }
     }
 
-    if (showDialog) {
-        AddFeedbackDialog(onDismiss = { showDialog = false }, onAdd = { feedback ->
+    if (showAddDialog) {
+        AddFeedbackDialog(onDismiss = { showAddDialog = false }, onAdd = { feedback ->
             viewModel.addFeedback(evento, feedback)
-            showDialog = false
+            showAddDialog = false
+        })
+    }
+
+    if (showEditFeedbackDialog) {
+        selectedFeedback?.let { feedback ->
+            EditFeedbackDialog(feedback = feedback, onDismiss = { showEditFeedbackDialog = false }, onSave = { updatedFeedback ->
+                viewModel.updateFeedback(updatedFeedback)
+                showEditFeedbackDialog = false
+            })
+        }
+    }
+
+    if (showEditDialog) {
+        EditEventDialog(evento = evento, onDismiss = { showEditDialog = false }, onSave = { updatedEvento ->
+            viewModel.updateEvento(updatedEvento)
+            showEditDialog = false
         })
     }
 }
 
 @Composable
-fun FeedbackItem(feedback: Feedback, viewModel: MainViewModel) {
+fun FeedbackItem(feedback: Feedback, viewModel: MainViewModel, onEdit: (Feedback) -> Unit) {
     var showConfirmDialog by remember { mutableStateOf(false) }
 
     if (showConfirmDialog) {
@@ -128,11 +151,110 @@ fun FeedbackItem(feedback: Feedback, viewModel: MainViewModel) {
             Text(text = feedback.nombre, style = MaterialTheme.typography.titleMedium)
             Text(text = "Opinión: ${feedback.opinion}")
             Text(text = "Puntuación: ${feedback.puntuacion}")
-            Button(onClick = { showConfirmDialog = true }) {
-                Text(text = "Eliminar feedback")
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Button(
+                    onClick = { onEdit(feedback) },
+                    modifier = Modifier.weight(1f).padding(end = 8.dp)
+                ) {
+                    Text(text = "Editar feedback")
+                }
+                Button(
+                    onClick = { showConfirmDialog = true },
+                    modifier = Modifier.weight(1f).padding(start = 8.dp)
+                ) {
+                    Text(text = "Borrar feedback")
+                }
             }
         }
     }
+}
+
+@Composable
+fun EditEventDialog(evento: Evento, onDismiss: () -> Unit, onSave: (Evento) -> Unit) {
+    var titulo by remember { mutableStateOf(evento.titulo) }
+    var hora by remember { mutableStateOf(evento.hora) }
+    var localizacion by remember { mutableStateOf(evento.localizacion) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Editar evento") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = titulo,
+                    onValueChange = { titulo = it },
+                    label = { Text("Titulo") }
+                )
+                OutlinedTextField(
+                    value = hora,
+                    onValueChange = { hora = it },
+                    label = { Text("Hora (HH:mm)") }
+                )
+                OutlinedTextField(
+                    value = localizacion,
+                    onValueChange = { localizacion = it },
+                    label = { Text("Localizacion") }
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                val updatedEvento = evento.copy(titulo = titulo, hora = hora, localizacion = localizacion)
+                onSave(updatedEvento)
+            }) {
+                Text("Guardar")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+fun EditFeedbackDialog(feedback: Feedback, onDismiss: () -> Unit, onSave: (Feedback) -> Unit) {
+    var nombre by remember { mutableStateOf(feedback.nombre) }
+    var opinion by remember { mutableStateOf(feedback.opinion) }
+    var puntuacion by remember { mutableStateOf(feedback.puntuacion) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Editar feedback") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre") }
+                )
+                OutlinedTextField(
+                    value = opinion,
+                    onValueChange = { opinion = it },
+                    label = { Text("Opinión") }
+                )
+                OutlinedTextField(
+                    value = puntuacion.toString(),
+                    onValueChange = { puntuacion = it.toDoubleOrNull() ?: 0.0 },
+                    label = { Text("Puntuación") }
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                val updatedFeedback = feedback.copy(nombre = nombre, opinion = opinion, puntuacion = puntuacion)
+                onSave(updatedFeedback)
+            }) {
+                Text("Guardar")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }
 
 @Composable
